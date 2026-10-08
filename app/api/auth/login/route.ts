@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
-import { serialize } from "cookie";
 
 const API_URL = "https://notehub-api.goit.study";
 
