@@ -13,25 +13,42 @@ export default async function proxy(req: NextRequest) {
 
   if (!isPrivate && !isPublic) return NextResponse.next();
 
-  const cookieHeader = req.headers.get("cookie") || "";
+  const accessToken = req.cookies.get("accessToken")?.value;
+  const refreshToken = req.cookies.get("refreshToken")?.value;
 
-  let isAuthenticated = false;
-  try {
-    const res = await fetch(`${API_URL}/auth/session`, {
-      headers: { Cookie: cookieHeader },
-    });
-    const data = await res.json();
-    isAuthenticated = !!data;
-  } catch {
-    isAuthenticated = false;
+  if (!accessToken && !refreshToken) {
+    if (isPrivate) {
+      return NextResponse.redirect(new URL("/sign-in", req.url));
+    }
+    return NextResponse.next();
   }
 
-  if (isPrivate && !isAuthenticated) {
-    return NextResponse.redirect(new URL("/sign-in", req.url));
+  if (!accessToken && refreshToken) {
+    try {
+      const res = await fetch(`${API_URL}/auth/session`, {
+        headers: { Cookie: req.headers.get("cookie") || "" },
+      });
+      const nextResponse = NextResponse.next();
+      const setCookie = res.headers.get("set-cookie");
+      if (setCookie) {
+        nextResponse.headers.set("set-cookie", setCookie);
+      }
+      if (!res.ok) {
+        if (isPrivate) {
+          return NextResponse.redirect(new URL("/sign-in", req.url));
+        }
+      }
+      return nextResponse;
+    } catch {
+      if (isPrivate) {
+        return NextResponse.redirect(new URL("/sign-in", req.url));
+      }
+      return NextResponse.next();
+    }
   }
 
-  if (isPublic && isAuthenticated) {
-    return NextResponse.redirect(new URL("/profile", req.url));
+  if (isPublic) {
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   return NextResponse.next();
