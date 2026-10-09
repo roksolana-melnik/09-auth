@@ -13,8 +13,8 @@ export default function AuthProvider({
 
   useEffect(() => {
     checkSession()
-      .then((session) => {
-        if (session.success) {
+      .then((response) => {
+        if (response.data.success) {
           return getMe().then(setUser);
         } else {
           clearIsAuthenticated();

@@ -65,9 +65,8 @@ export async function logout(): Promise<void> {
   await api.post("/auth/logout");
 }
 
-export async function checkSession(): Promise<{ success: boolean }> {
-  const { data } = await api.get<{ success: boolean }>("/auth/session");
-  return data;
+export async function checkSession(): Promise<import('axios').AxiosResponse<{ success: boolean }>> {
+  return api.get<{ success: boolean }>("/auth/session");
 }
 
 export async function getMe(): Promise<User> {

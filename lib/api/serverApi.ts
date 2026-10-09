@@ -34,8 +34,7 @@ export async function getMe(): Promise<User> {
   return data;
 }
 
-export async function checkSession(): Promise<{ success: boolean }> {
+export async function checkSession(): Promise<import('axios').AxiosResponse<{ success: boolean }>> {
   const headers = await getHeaders();
-  const { data } = await api.get<{ success: boolean }>("/auth/session", { headers });
-  return data;
+  return api.get<{ success: boolean }>("/auth/session", { headers });
 }
