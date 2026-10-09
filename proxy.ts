@@ -6,7 +6,7 @@ const API_URL = "https://notehub-api.goit.study";
 const privateRoutes = ["/profile", "/notes"];
 const publicRoutes = ["/sign-in", "/sign-up"];
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   const isPrivate = privateRoutes.some((r) => pathname.startsWith(r));
