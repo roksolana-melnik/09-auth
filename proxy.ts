@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import axios from "axios";
 
 const API_URL = "https://notehub-api.goit.study";
 
@@ -18,9 +17,10 @@ export default async function proxy(req: NextRequest) {
 
   let isAuthenticated = false;
   try {
-    const { data } = await axios.get(`${API_URL}/auth/session`, {
+    const res = await fetch(`${API_URL}/auth/session`, {
       headers: { Cookie: cookieHeader },
     });
+    const data = await res.json();
     isAuthenticated = !!data;
   } catch {
     isAuthenticated = false;
