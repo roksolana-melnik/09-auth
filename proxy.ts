@@ -29,16 +29,16 @@ export default async function proxy(req: NextRequest) {
       const response = await checkSession();
 
       const setCookie = response.headers["set-cookie"];
+      const nextResponse = NextResponse.next();
+
       if (setCookie) {
         const cookieArray = Array.isArray(setCookie) ? setCookie : [setCookie];
-        for (const cookieStr of cookieArray) {
-          const [nameVal] = cookieStr.split(";");
-          const [name, value] = nameVal.trim().split("=");
-          if (name && value !== undefined) {
-            cookieStore.set(name.trim(), value.trim());
-          }
-        }
+        cookieArray.forEach((cookie: string) => {
+          nextResponse.headers.append("Set-Cookie", cookie);
+        });
       }
+
+      return nextResponse;
     } catch {
       if (isPrivate) {
         return NextResponse.redirect(new URL("/sign-in", req.url));
