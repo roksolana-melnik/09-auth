@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { getMe } from "../../../lib/api/serverApi";
 import css from "./ProfilePage.module.css";
 
@@ -21,7 +20,7 @@ export default async function ProfilePage() {
           </a>
         </div>
         <div className={css.avatarWrapper}>
-          <Image
+          <img
             src={user.avatar}
             alt="User Avatar"
             width={120}
