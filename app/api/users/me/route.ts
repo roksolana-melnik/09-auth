@@ -1,56 +1,54 @@
-import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import axios, { isAxiosError } from "axios";
+export const dynamic = 'force-dynamic';
 
-const API_URL = "https://notehub-api.goit.study";
+import { NextResponse } from 'next/server';
+import { api } from '../../api';
+import { cookies } from 'next/headers';
+import { logErrorResponse } from '../../_utils/utils';
+import { isAxiosError } from 'axios';
 
-function logErrorResponse(error: unknown) {
-  if (isAxiosError(error) && error.response) {
-    console.error("API Error:", error.response.status, error.response.data);
-  } else {
-    console.error("Unexpected error:", error);
+export async function GET() {
+  try {
+    const cookieStore = await cookies();
+
+    const res = await api.get('/users/me', {
+      headers: {
+        Cookie: cookieStore.toString(),
+      },
+    });
+    return NextResponse.json(res.data, { status: res.status });
+  } catch (error) {
+    if (isAxiosError(error)) {
+      logErrorResponse(error.response?.data);
+      return NextResponse.json(
+        { error: error.message, response: error.response?.data },
+        { status: error.status }
+      );
+    }
+    logErrorResponse({ message: (error as Error).message });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
 
-export async function GET(req: NextRequest) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
+export async function PATCH(request: Request) {
   try {
-    const response = await axios.get(`${API_URL}/users/me`, {
-      headers: { Cookie: cookieHeader },
-      withCredentials: true,
-    });
-    return NextResponse.json(response.data, { status: response.status });
-  } catch (error) {
-    logErrorResponse(error);
-    if (isAxiosError(error) && error.response) {
-      return NextResponse.json(error.response.data, {
-        status: error.response.status,
-      });
-    }
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
-  }
-}
+    const cookieStore = await cookies();
+    const body = await request.json();
 
-export async function PATCH(req: NextRequest) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-  const body = await req.json();
-
-  try {
-    const response = await axios.patch(`${API_URL}/users/me`, body, {
-      headers: { Cookie: cookieHeader },
-      withCredentials: true,
+    const res = await api.patch('/users/me', body, {
+      headers: {
+        Cookie: cookieStore.toString(),
+      },
     });
-    return NextResponse.json(response.data, { status: response.status });
+    return NextResponse.json(res.data, { status: res.status });
   } catch (error) {
-    logErrorResponse(error);
-    if (isAxiosError(error) && error.response) {
-      return NextResponse.json(error.response.data, {
-        status: error.response.status,
-      });
+    if (isAxiosError(error)) {
+      logErrorResponse(error.response?.data);
+      return NextResponse.json(
+        { error: error.message, response: error.response?.data },
+        { status: error.status }
+      );
     }
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    logErrorResponse({ message: (error as Error).message });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

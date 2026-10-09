@@ -3,7 +3,6 @@ import api from "./api";
 import type { Note } from "../../types/note";
 import type { User } from "../../types/user";
 import type { FetchNotesParams, FetchNotesResponse } from "./clientApi";
-import type { AxiosResponse } from "axios";
 
 async function getHeaders() {
   const cookieStore = await cookies();
@@ -35,7 +34,8 @@ export async function getMe(): Promise<User> {
   return data;
 }
 
-export async function checkSession(): Promise<AxiosResponse<User | null>> {
+export async function checkSession(): Promise<{ success: boolean }> {
   const headers = await getHeaders();
-  return api.get<User | null>("/auth/session", { headers });
+  const { data } = await api.get<{ success: boolean }>("/auth/session", { headers });
+  return data;
 }

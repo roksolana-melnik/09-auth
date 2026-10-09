@@ -1,46 +1,48 @@
-import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import axios, { isAxiosError } from "axios";
+import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { api } from '../../api';
+import { parseSetCookie } from 'cookie';
+import { isAxiosError } from 'axios';
+import { logErrorResponse } from '../../_utils/utils';
 
-const API_URL = "https://notehub-api.goit.study";
-
-function logErrorResponse(error: unknown) {
-  if (isAxiosError(error) && error.response) {
-    console.error("API Error:", error.response.status, error.response.data);
-  } else {
-    console.error("Unexpected error:", error);
-  }
-}
-
-export async function GET(req: NextRequest) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
+export async function GET() {
   try {
-    const response = await axios.get(`${API_URL}/auth/session`, {
-      headers: { Cookie: cookieHeader },
-      withCredentials: true,
-    });
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('accessToken')?.value;
+    const refreshToken = cookieStore.get('refreshToken')?.value;
 
-    const setCookieHeader = response.headers["set-cookie"];
-    const nextResponse = NextResponse.json(response.data, {
-      status: response.status,
-    });
-
-    if (setCookieHeader) {
-      setCookieHeader.forEach((cookie: string) => {
-        nextResponse.headers.append("Set-Cookie", cookie);
-      });
+    if (accessToken) {
+      return NextResponse.json({ success: true });
     }
 
-    return nextResponse;
+    if (refreshToken) {
+      const apiRes = await api.get('auth/session', {
+        headers: {
+          Cookie: cookieStore.toString(),
+        },
+      });
+
+      const setCookie = apiRes.headers['set-cookie'];
+
+      if (setCookie) {
+        const cookieArray = Array.isArray(setCookie) ? setCookie : [setCookie];
+        for (const cookieStr of cookieArray) {
+          const parsed = parseSetCookie(cookieStr);
+
+          if (parsed.value) {
+            cookieStore.set(parsed.name, parsed.value, parsed);
+          }
+        }
+        return NextResponse.json({ success: true }, { status: 200 });
+      }
+    }
+    return NextResponse.json({ success: false }, { status: 200 });
   } catch (error) {
-    logErrorResponse(error);
-    if (isAxiosError(error) && error.response) {
-      return NextResponse.json(error.response.data, {
-        status: error.response.status,
-      });
+    if (isAxiosError(error)) {
+      logErrorResponse(error.response?.data);
+      return NextResponse.json({ success: false }, { status: 200 });
     }
-    return NextResponse.json(null, { status: 200 });
+    logErrorResponse({ message: (error as Error).message });
+    return NextResponse.json({ success: false }, { status: 200 });
   }
 }

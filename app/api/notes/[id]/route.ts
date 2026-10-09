@@ -1,89 +1,81 @@
-import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import axios, { isAxiosError } from "axios";
+import { NextResponse } from 'next/server';
+import { api } from '../../api';
+import { cookies } from 'next/headers';
+import { logErrorResponse } from '../../_utils/utils';
+import { isAxiosError } from 'axios';
 
-const API_URL = "https://notehub-api.goit.study";
+type Props = {
+  params: Promise<{ id: string }>;
+};
 
-function logErrorResponse(error: unknown) {
-  if (isAxiosError(error) && error.response) {
-    console.error("API Error:", error.response.status, error.response.data);
-  } else {
-    console.error("Unexpected error:", error);
+export async function GET(request: Request, { params }: Props) {
+  try {
+    const cookieStore = await cookies();
+    const { id } = await params;
+    const res = await api(`/notes/${id}`, {
+      headers: {
+        Cookie: cookieStore.toString(),
+      },
+    });
+    return NextResponse.json(res.data, { status: res.status });
+  } catch (error) {
+    if (isAxiosError(error)) {
+      logErrorResponse(error.response?.data);
+      return NextResponse.json(
+        { error: error.message, response: error.response?.data },
+        { status: error.status }
+      );
+    }
+    logErrorResponse({ message: (error as Error).message });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-  const { id } = await params;
-
+export async function DELETE(request: Request, { params }: Props) {
   try {
-    const response = await axios.get(`${API_URL}/notes/${id}`, {
-      headers: { Cookie: cookieHeader },
-      withCredentials: true,
+    const cookieStore = await cookies();
+    const { id } = await params;
+
+    const res = await api.delete(`/notes/${id}`, {
+      headers: {
+        Cookie: cookieStore.toString(),
+      },
     });
-    return NextResponse.json(response.data, { status: response.status });
+    return NextResponse.json(res.data, { status: res.status });
   } catch (error) {
-    logErrorResponse(error);
-    if (isAxiosError(error) && error.response) {
-      return NextResponse.json(error.response.data, {
-        status: error.response.status,
-      });
+    if (isAxiosError(error)) {
+      logErrorResponse(error.response?.data);
+      return NextResponse.json(
+        { error: error.message, response: error.response?.data },
+        { status: error.status }
+      );
     }
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    logErrorResponse({ message: (error as Error).message });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-  const { id } = await params;
-  const body = await req.json();
-
+export async function PATCH(request: Request, { params }: Props) {
   try {
-    const response = await axios.patch(`${API_URL}/notes/${id}`, body, {
-      headers: { Cookie: cookieHeader },
-      withCredentials: true,
-    });
-    return NextResponse.json(response.data, { status: response.status });
-  } catch (error) {
-    logErrorResponse(error);
-    if (isAxiosError(error) && error.response) {
-      return NextResponse.json(error.response.data, {
-        status: error.response.status,
-      });
-    }
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
-  }
-}
+    const cookieStore = await cookies();
+    const { id } = await params;
+    const body = await request.json();
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-  const { id } = await params;
-
-  try {
-    const response = await axios.delete(`${API_URL}/notes/${id}`, {
-      headers: { Cookie: cookieHeader },
-      withCredentials: true,
+    const res = await api.patch(`/notes/${id}`, body, {
+      headers: {
+        Cookie: cookieStore.toString(),
+      },
     });
-    return NextResponse.json(response.data, { status: response.status });
+    return NextResponse.json(res.data, { status: res.status });
   } catch (error) {
-    logErrorResponse(error);
-    if (isAxiosError(error) && error.response) {
-      return NextResponse.json(error.response.data, {
-        status: error.response.status,
-      });
+    if (isAxiosError(error)) {
+      logErrorResponse(error.response?.data);
+      return NextResponse.json(
+        { error: error.message, response: error.response?.data },
+        { status: error.status }
+      );
     }
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    logErrorResponse({ message: (error as Error).message });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

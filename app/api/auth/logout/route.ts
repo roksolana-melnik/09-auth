@@ -1,45 +1,35 @@
-import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import axios, { isAxiosError } from "axios";
+import { NextResponse } from 'next/server';
+import { api } from '../../api';
+import { cookies } from 'next/headers';
+import { isAxiosError } from 'axios';
+import { logErrorResponse } from '../../_utils/utils';
 
-const API_URL = "https://notehub-api.goit.study";
-
-function logErrorResponse(error: unknown) {
-  if (isAxiosError(error) && error.response) {
-    console.error("API Error:", error.response.status, error.response.data);
-  } else {
-    console.error("Unexpected error:", error);
-  }
-}
-
-export async function POST(req: NextRequest) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
+export async function POST() {
   try {
-    await axios.post(
-      `${API_URL}/auth/logout`,
-      {},
-      {
-        headers: { Cookie: cookieHeader },
-        withCredentials: true,
-      }
-    );
+    const cookieStore = await cookies();
 
-    const nextResponse = NextResponse.json({}, { status: 200 });
+    const accessToken = cookieStore.get('accessToken')?.value;
+    const refreshToken = cookieStore.get('refreshToken')?.value;
 
-    req.cookies.getAll().forEach(({ name }) => {
-      nextResponse.cookies.set(name, "", { maxAge: 0, path: "/" });
+    await api.post('auth/logout', null, {
+      headers: {
+        Cookie: `accessToken=${accessToken}; refreshToken=${refreshToken}`,
+      },
     });
 
-    return nextResponse;
+    cookieStore.delete('accessToken');
+    cookieStore.delete('refreshToken');
+
+    return NextResponse.json({ message: 'Logged out successfully' }, { status: 200 });
   } catch (error) {
-    logErrorResponse(error);
-    if (isAxiosError(error) && error.response) {
-      return NextResponse.json(error.response.data, {
-        status: error.response.status,
-      });
+    if (isAxiosError(error)) {
+      logErrorResponse(error.response?.data);
+      return NextResponse.json(
+        { error: error.message, response: error.response?.data },
+        { status: error.status }
+      );
     }
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    logErrorResponse({ message: (error as Error).message });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
