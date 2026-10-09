@@ -15,7 +15,7 @@ export default async function ProfilePage() {
       <div className={css.profileCard}>
         <div className={css.header}>
           <h1 className={css.formTitle}>Profile Page</h1>
-          <a href="/profile/edit" className={css.editProfileButton}>
+          <a src="/profile/edit" className={css.editProfileButton}>
             Edit Profile
           </a>
         </div>
