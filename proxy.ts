@@ -27,23 +27,18 @@ export default async function proxy(req: NextRequest) {
   if (!accessToken && refreshToken) {
     try {
       const response = await checkSession();
-      const nextResponse = NextResponse.next();
 
       const setCookie = response.headers["set-cookie"];
       if (setCookie) {
         const cookieArray = Array.isArray(setCookie) ? setCookie : [setCookie];
-        cookieArray.forEach((cookie: string) => {
-          nextResponse.headers.append("Set-Cookie", cookie);
-        });
-      }
-
-      if (!response.data.success) {
-        if (isPrivate) {
-          return NextResponse.redirect(new URL("/sign-in", req.url));
+        for (const cookieStr of cookieArray) {
+          const [nameVal] = cookieStr.split(";");
+          const [name, value] = nameVal.trim().split("=");
+          if (name && value !== undefined) {
+            cookieStore.set(name.trim(), value.trim());
+          }
         }
       }
-
-      return nextResponse;
     } catch {
       if (isPrivate) {
         return NextResponse.redirect(new URL("/sign-in", req.url));
