@@ -38,6 +38,10 @@ export default async function proxy(req: NextRequest) {
         });
       }
 
+      if (isPublic) {
+        return NextResponse.redirect(new URL("/", req.url));
+      }
+
       return nextResponse;
     } catch {
       if (isPrivate) {
